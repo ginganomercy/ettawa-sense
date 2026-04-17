@@ -35,15 +35,17 @@ jobs:
           NEXT_PUBLIC_API_KEY: build-placeholder
           NEXT_PUBLIC_MOCK_MODE: 'false'
 
-      # 5. Buat tar.gz (include node_modules + .next, exclude .env + .git)
+      # 5. Buat tar.gz — output ke /tmp/ dulu agar tidak terjadi
+      #    "file changed as we read it" (tar tidak bisa archive file output-nya sendiri)
       - name: Create deployment archive
         run: |
-          tar -czf ettawa-deploy.tar.gz \
+          tar -czf /tmp/ettawa-deploy.tar.gz \
             --exclude='.git' \
             --exclude='.env' \
             --exclude='*.tar.gz' \
             --exclude='.github' \
             .
+          cp /tmp/ettawa-deploy.tar.gz ./ettawa-deploy.tar.gz
           echo "Archive size: $(du -sh ettawa-deploy.tar.gz | cut -f1)"
 
       # 6. Upload tar.gz ke cPanel via FTP
