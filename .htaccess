@@ -1,0 +1,40 @@
+# Ettawa-Sense — cPanel .htaccess
+# Digunakan saat app di-deploy via cPanel Node.js Selector (Passenger).
+#
+# PENTING:
+#   - File ini otomatis diupdate oleh cPanel saat pertama kali setup app.
+#   - Jangan hapus baris yang dibuat cPanel (PassengerEnabled, dll).
+#   - Baris di bawah ini adalah yang perlu ditambahkan SECARA MANUAL
+#     setelah cPanel selesai men-generate konfigurasi awal.
+
+Options -MultiViews
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # ── WebSocket Upgrade ─────────────────────────────────────────
+  # Diperlukan agar ws:// dan wss:// request (Socket.io + Aedes MQTT)
+  # diteruskan ke Node.js, bukan diblock oleh Apache.
+  # mod_proxy_wstunnel harus sudah aktif di server (cPanel biasanya aktif).
+  RewriteCond %{HTTP:Upgrade} websocket [NC]
+  RewriteCond %{HTTP:Connection} upgrade [NC]
+  RewriteRule ^/?(.*) "ws://127.0.0.1:%{ENV:PORT}/$1" [P,L]
+
+  # ── HTTP Fallback ─────────────────────────────────────────────
+  # File/dir yang ada → serve langsung (static assets Next.js)
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Semua request lain → Node.js via Passenger
+  RewriteRule ^/?(.*) "http://127.0.0.1:%{ENV:PORT}/$1" [P,L]
+</IfModule>
+
+# ── Security Headers ──────────────────────────────────────────
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # HSTS — aktifkan HANYA jika SSL sudah terpasang dan dikonfirmasi berjalan
+  # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+</IfModule>

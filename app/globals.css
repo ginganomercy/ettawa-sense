@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   Ettawa-Sense — LIGHT MOBILE THEME
+   Warna utama: putih | Aksen: teal → emerald gradient
+   ═══════════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary:          #0891b2;   /* teal-600   */
+  --primary-light:    #22d3ee;   /* cyan-400   */
+  --primary-dark:     #0e7490;   /* teal-700   */
+  --secondary:        #059669;   /* emerald-600*/
+  --secondary-light:  #34d399;   /* emerald-400*/
+
+  --bg-base:          #f0f9ff;   /* sky-50     */
+  --bg-surface:       #ffffff;
+  --bg-card:          #ffffff;
+  --bg-muted:         #f8fafc;   /* slate-50   */
+
+  --text-primary:     #0f172a;   /* slate-900  */
+  --text-secondary:   #475569;   /* slate-600  */
+  --text-muted:       #94a3b8;   /* slate-400  */
+  --text-accent:      #0891b2;
+
+  --border:           rgba(8, 145, 178, 0.12);
+  --border-hover:     rgba(8, 145, 178, 0.30);
+
+  --shadow-card:      0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(8,145,178,0.07);
+  --shadow-hover:     0 4px 12px rgba(0,0,0,0.06), 0 16px 40px rgba(8,145,178,0.14);
+
+  --glow-danger:      0 0 24px rgba(239,68,68,0.20);
+  --glow-warn:        0 0 24px rgba(234,179,8,0.20);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Reset ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(145deg, #f0f9ff 0%, #ecfdf5 60%, #f0fdf4 100%);
+  color:      var(--text-primary);
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* ── Card (Light Glassmorphism) ────────────────────────────────── */
+.glass-card {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: 16px;
+  box-shadow:    var(--shadow-card);
+  overflow:      hidden;          /* ← prevent content bleed */
+  transition:    box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.glass-card:hover {
+  box-shadow:    var(--shadow-hover);
+  border-color:  var(--border-hover);
+}
+
+/* ── Gradient text ─────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Gradient background ──────────────────────────────────────── */
+.gradient-bg {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+/* ── Badges ────────────────────────────────────────────────────── */
+.badge {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            5px;
+  padding:        3px 10px;
+  border-radius:  999px;
+  font-size:      0.68rem;
+  font-weight:    700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.badge-normal  { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+.badge-warning { background:#fef9c3; color:#a16207; border:1px solid #fde68a; }
+.badge-stress  { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; animation: pulse-danger 1.8s infinite; }
+.badge-hypo    { background:#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe; }
+.badge-online  { background:#cffafe; color:#0e7490; border:1px solid #a5f3fc; }
+.badge-offline { background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; }
+
+/* ── Animations ────────────────────────────────────────────────── */
+@keyframes pulse-danger {
+  0%,100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.15); }
+  50%      { box-shadow: 0 0 0 6px rgba(220,38,38,0.05); }
+}
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity:0; }
+  to   { opacity:1; }
+}
+@keyframes float {
+  0%,100% { transform:translateY(0); }
+  50%      { transform:translateY(-7px); }
+}
+@keyframes spin-anim {
+  to { transform:rotate(360deg); }
+}
+@keyframes shimmer {
+  0%   { background-position:-200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.fade-in-up { animation: fadeInUp 0.4s ease forwards; }
+.fade-in    { animation: fadeIn 0.35s ease forwards; }
+.float      { animation: float 3s ease-in-out infinite; }
+.spinner    { animation: spin-anim 1s linear infinite; }
+
+/* ── Skeleton ──────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+/* ── Card metric label ─────────────────────────────────────────── */
+.card-label {
+  font-size:      0.68rem;
+  font-weight:    600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color:          var(--text-muted);
+}
+
+/* ── Stat box ──────────────────────────────────────────────────── */
+.stat-box {
+  background:    #f8fafc;
+  border:        1px solid #f1f5f9;
+  border-radius: 12px;
+  padding:       10px 12px;
 }
