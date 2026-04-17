@@ -1,0 +1,60 @@
+name: Build & Deploy to cPanel
+
+# Trigger: setiap push ke branch master
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest   # Build di Linux GitHub — tanpa CloudLinux/nproc limit
+
+    steps:
+      # 1. Checkout kode
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Setup Node.js 20
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 3. Install dependencies (di Linux, tidak ada fork limit)
+      - name: Install dependencies
+        run: npm install
+
+      # 4. Build Next.js production
+      - name: Build Next.js
+        run: npm run build
+        env:
+          NODE_ENV: production
+          # Env vars dummy untuk build saja — nilai asli di .env cPanel
+          NEXT_PUBLIC_BACKEND_URL: https://ettawa-sense.sakra.dev-myproject.my.id
+          NEXT_PUBLIC_API_KEY: build-placeholder
+          NEXT_PUBLIC_MOCK_MODE: 'false'
+
+      # 5. Buat tar.gz (include node_modules + .next, exclude .env + .git)
+      - name: Create deployment archive
+        run: |
+          tar -czf ettawa-deploy.tar.gz \
+            --exclude='.git' \
+            --exclude='.env' \
+            --exclude='*.tar.gz' \
+            --exclude='.github' \
+            .
+          echo "Archive size: $(du -sh ettawa-deploy.tar.gz | cut -f1)"
+
+      # 6. Upload tar.gz ke cPanel via FTP
+      - name: Upload to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
+          include: |
+            ettawa-deploy.tar.gz
+          log-level: minimal
