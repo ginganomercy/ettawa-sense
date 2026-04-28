@@ -232,7 +232,7 @@ function ConnectingScreen({ deviceId }) {
             </p>
           )}
           <p className="text-slate-400 text-xs mt-0.5">
-            Pastikan server berjalan di <code className="text-teal-600 font-mono">localhost:3000</code>
+            URL Backend: <code className="text-teal-600 font-mono">{process.env.NEXT_PUBLIC_BACKEND_URL || 'unknown'}</code>
           </p>
         </div>
       </div>
