@@ -26,10 +26,17 @@ import express from 'express';
 import { createServer } from 'http';
 import next from 'next';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { initSocketServer } from './lib/socket-server.js';
 import { startMqttClient } from './lib/mqtt-client.js';
 import { initAedesBroker } from './lib/aedes-broker.js';
 import { queryHistory, getRecentAlerts, storageMode } from './lib/data-store.js';
+import { startMockGenerator } from './lib/mock-generator.js';
+
+// Resolve __dirname untuk ESM (type: "module") — diperlukan untuk next({ dir })
+const __filename = fileURLToPath(import.meta.url);
+const __dirname  = path.dirname(__filename);
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const IS_DEV = process.env.NODE_ENV !== 'production';
@@ -40,7 +47,7 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
   .map(o => o.trim());
 
 // ── 1. Next.js App ──────────────────────────────────────────
-const nextApp = next({ dev: IS_DEV });
+const nextApp = next({ dev: IS_DEV, dir: __dirname });
 const handle = nextApp.getRequestHandler();
 
 await nextApp.prepare();
@@ -136,4 +143,9 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   // ── 5. Node.js Internal MQTT Client ──────────────────────
   // Dipanggil di sini agar server sudah listen sebelum MQTT client connect.
   startMqttClient(io);
+
+  // ── 6. Start Mock generator ────────────────────────────────
+  if (process.env.USE_MOCK_DATA === 'true' || IS_DEV) {
+    startMockGenerator(io);
+  }
 });

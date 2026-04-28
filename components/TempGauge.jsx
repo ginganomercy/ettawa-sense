@@ -15,6 +15,7 @@ function tempColor(t) {
   if (t >= 38.0) return '#0891b2';
   return '#60a5fa';
 }
+
 function tempLabel(t) {
   if (t == null)  return '—';
   if (t > 40.0)   return 'FEVER';
@@ -34,7 +35,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 }
 
 export default function TempGauge() {
-  const { telemetry } = useSocket();
+  const { telemetry, isMockTemp } = useSocket();
   const temp  = telemetry ? parseFloat(telemetry.temp_c) : null;
   const color = tempColor(temp);
   const label = tempLabel(temp);
@@ -75,7 +76,7 @@ export default function TempGauge() {
             style={{ filter: `drop-shadow(0 0 4px ${color}88)`, transition: 'stroke 0.5s ease' }}
           />
         )}
-        {/* Center */}
+        {/* Center value */}
         <text x={cx} y={cy - 4} textAnchor="middle" fill={color}
               fontSize="20" fontWeight="800" style={{ transition: 'fill 0.5s ease' }}>
           {temp != null ? temp.toFixed(1) : '—'}
@@ -86,7 +87,36 @@ export default function TempGauge() {
         <text x={92} y={92} textAnchor="middle" fill="#cbd5e1" fontSize="8">{TEMP_MAX}</text>
       </svg>
 
+      {/* Status badge suhu */}
       <span className={`badge ${badgeClass}`}>{label}</span>
+
+      {/* Badge MOCK — hanya muncul saat sensor DS18B20 tidak terpasang / data simulasi.
+          is_mock_temp dikirim dari mock-generator.js (server) atau firmware saat fallback. */}
+      {isMockTemp && (
+        <span
+          title="Sensor DS18B20 tidak terdeteksi — data suhu adalah simulasi"
+          style={{
+            display:       'inline-flex',
+            alignItems:    'center',
+            gap:           '0.25rem',
+            fontSize:      '0.65rem',
+            fontWeight:    '700',
+            letterSpacing: '0.05em',
+            color:         '#92400e',
+            background:    '#fef3c7',
+            border:        '1px solid #fbbf24',
+            borderRadius:  '9999px',
+            padding:       '0.15rem 0.55rem',
+          }}
+        >
+          {/* Warning icon */}
+          <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round"
+              d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          MOCK
+        </span>
+      )}
     </div>
   );
 }

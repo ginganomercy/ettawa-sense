@@ -1,54 +1,55 @@
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+FROM node:20-alpine AS deps
+# libc6-compat diperlukan untuk beberapa native addons di Alpine
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
-COPY package.json package-lock.json* ./
+# Install dependencies dengan CI mode (reproducible, no package updates)
+COPY package.json package-lock.json ./
 RUN npm ci
 
-# Rebuild the source code only when needed
-FROM base AS builder
+# ──────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Environment variables must be present at build time
-# https://nextjs.org/docs/api-reference/next.config.js/environment-variables
-ENV NEXT_TELEMETRY_DISABLED 1
+# Build Next.js production bundle
+# NEXT_TELEMETRY_DISABLED mematikan telemetri Next.js ke Vercel (tidak relevan, tapi best practice)
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
 RUN npm run build
 
-# Production image, copy all the files and run next
-FROM base AS runner
+# ──────────────────────────────────────────────────────────────
+# Production runner — jalankan custom server.js monolith
+# (bukan next start, karena server.js yang meng-orchestrate Express + Socket.io + Aedes)
+FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+# Port 5151 sesuai nginx upstream: "upstream ettawa { server 127.0.0.1:5151; }"
+ENV PORT=5151
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
-
-# Set the correct permission for prerender cache
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Salin artefak build
+COPY --from=builder /app/public       ./public
+COPY --from=builder /app/.next        ./.next
+# Salin semua source (diperlukan oleh custom server.js monolith):
+# server.js, lib/, context/, components/, app/, next.config.mjs, dll
+COPY --from=builder --chown=nextjs:nodejs /app/server.js      ./server.js
+COPY --from=builder --chown=nextjs:nodejs /app/lib            ./lib
+COPY --from=builder --chown=nextjs:nodejs /app/next.config.mjs ./next.config.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/package.json   ./package.json
+# node_modules production hanya — sudah di-install di stage deps
+COPY --from=deps    --chown=nextjs:nodejs /app/node_modules   ./node_modules
 
 USER nextjs
 
-EXPOSE 3000
+EXPOSE 5151
 
-ENV PORT 3000
-# set hostname to localhost
-ENV HOSTNAME "0.0.0.0"
-
+# Jalankan custom server.js — ini yang mengatur Next.js + Express + Socket.io + Aedes MQTT
 CMD ["node", "server.js"]

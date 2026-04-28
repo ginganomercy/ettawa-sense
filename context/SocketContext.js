@@ -34,20 +34,24 @@ const MOCK_MODE = process.env.NEXT_PUBLIC_MOCK_MODE === 'true';
 // ── State Shape ───────────────────────────────────────────────
 const initialState = MOCK_MODE ? {
   telemetry:     { temp_c: 38.8, temp_f: 101.8, temp_status: "NORMAL", stress_score: 5, stress_level: "NORMAL", accel: {x: 0, y: 9.8, z: 0.1} },
-  bpm:           115,        // Detak jantung normal (rentang 100 - 130)
-  alerts:        [],          
+  bpm:           115,
+  alerts:        [],
   deviceStatus:  { online: true, ts: Date.now() },
   accelHistory:  Array.from({length: 30}, (_, i) => ({ ts: Date.now() - (30-i)*1000, x: 0, y: 9.8, z: 0.1 })),
-  wsConnected:   true,       
-  mqttConnected: true,       
+  wsConnected:   true,
+  mqttConnected: true,
+  // MOCK_MODE aktif → suhu pasti simulasi
+  isMockTemp:    true,
 } : {
-  telemetry:     null,        
-  bpm:           null,        
-  alerts:        [],          
+  telemetry:     null,
+  bpm:           null,
+  alerts:        [],
   deviceStatus:  { online: false, ts: null },
-  accelHistory:  [],          
-  wsConnected:   false,       
-  mqttConnected: false,       
+  accelHistory:  [],
+  wsConnected:   false,
+  mqttConnected: false,
+  // false → suhu real dari ESP32; akan diubah true jika payload is_mock_temp=true
+  isMockTemp:    false,
 };
 
 function reducer(state, action) {
@@ -63,6 +67,8 @@ function reducer(state, action) {
         ...state,
         telemetry:    action.payload,
         accelHistory: [...state.accelHistory, entry].slice(-MAX_ACCEL_POINTS),
+        // Update isMockTemp dari payload — jika field tidak ada, pertahankan state sebelumnya
+        isMockTemp:   action.payload.is_mock_temp === true ? true : false,
       };
     }
     case 'SET_BPM':
