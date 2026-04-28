@@ -1,0 +1,34 @@
+# ============================================================
+# Ettawa-Sense — Docker Compose (Bare Metal Debian)
+#
+# Arsitektur: Monolith single service
+#   Next.js + Express + Socket.io + Aedes MQTT broker
+#   berjalan dalam satu container di port 5151.
+#
+# Nginx di server melakukan reverse proxy:
+#   upstream ettawa { server 127.0.0.1:5151; }
+#
+# Cara deploy:
+#   1. File .env sudah dibuat di server (lihat .env.production.example)
+#   2. docker compose pull
+#   3. docker compose up -d
+# ============================================================
+
+services:
+  ettawa:
+    image: ghcr.io/${GHCR_REPO}:latest
+    container_name: ettawa
+    restart: unless-stopped
+    ports:
+      # 5151 di host → 5151 di container (sesuai nginx upstream)
+      - "5151:5151"
+    env_file:
+      # File .env dibuat manual di server, TIDAK di-commit ke Git.
+      # Lihat .env.production.example untuk template.
+      - .env
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5151/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s

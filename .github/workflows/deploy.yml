@@ -36,13 +36,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_PAT }}
 
-      # 4. Build image Docker dari frontend/Dockerfile dan push ke ghcr.io
+      # 4. Build image Docker dari Dockerfile (repo root = frontend/) dan push ke ghcr.io
       #    Build args NEXT_PUBLIC_* diperlukan saat next build (baked ke bundle JS)
       - name: Build & Push Docker Image
         uses: docker/build-push-action@v5
         with:
-          context: ./ettawa-web/frontend
-          file: ./ettawa-web/frontend/Dockerfile
+          context: .                 # Repo root = frontend/ — Dockerfile ada di sini
+          file: ./Dockerfile
           push: true
           tags: |
             ${{ env.IMAGE_NAME }}:latest
@@ -78,9 +78,8 @@ jobs:
           host:     ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key:      ${{ secrets.SSH_PRIVATE_KEY }}
-          source:   "ettawa-web/docker-compose.yml"
+          source:   "docker-compose.yml"   # Ada di repo root (frontend/docker-compose.yml)
           target:   ${{ secrets.DEPLOY_PATH }}
-          strip_components: 1  # Hapus prefix "ettawa-web/" — file langsung ke DEPLOY_PATH
 
       # 7. Deploy ke server via SSH
       #    Urutan:
