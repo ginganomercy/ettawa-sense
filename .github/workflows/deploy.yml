@@ -53,6 +53,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_BACKEND_URL=https://ettawa-sakra.momoi.my.id
             NEXT_PUBLIC_MOCK_MODE=false
+            NEXT_PUBLIC_API_KEY=${{ secrets.API_KEY }}
 
   deploy:
     name: Deploy to Bare Metal via SSH
