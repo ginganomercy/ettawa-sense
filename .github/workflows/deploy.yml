@@ -63,12 +63,12 @@ jobs:
       # 5. Install Tailscale dan join network
       #    Server tidak expose port SSH ke internet — akses via Tailscale mesh VPN.
       #    Runner GitHub Actions harus join network yang sama sebelum bisa SSH.
+      #    Node ephemeral ditentukan oleh tipe auth key (centang "Ephemeral" di Tailscale admin),
+      #    bukan via flag CLI — node otomatis dihapus dari network setelah job selesai.
       - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          # Ephemeral node: otomatis hapus dari Tailscale network saat job selesai
-          args: --ephemeral
 
       # 6. Salin docker-compose.yml ke server via SCP
       #    Tidak memerlukan git di server — file langsung di-copy dari runner.
