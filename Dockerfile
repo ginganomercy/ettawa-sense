@@ -13,6 +13,16 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Tangkap build-args yang dikirim oleh GitHub Actions
+ARG NEXT_PUBLIC_BACKEND_URL
+ARG NEXT_PUBLIC_MOCK_MODE
+ARG NEXT_PUBLIC_API_KEY
+
+# Jadikan sebagai Environment Variables untuk Next.js sewaktu npm run build berjalan
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+ENV NEXT_PUBLIC_MOCK_MODE=$NEXT_PUBLIC_MOCK_MODE
+ENV NEXT_PUBLIC_API_KEY=$NEXT_PUBLIC_API_KEY
+
 # Build Next.js production bundle
 # NEXT_TELEMETRY_DISABLED mematikan telemetri Next.js ke Vercel (tidak relevan, tapi best practice)
 ENV NEXT_TELEMETRY_DISABLED=1
