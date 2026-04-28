@@ -60,6 +60,11 @@ jobs:
     needs: build-and-push  # Jalankan hanya setelah image berhasil di-push
 
     steps:
+      # Checkout diperlukan agar docker-compose.yml tersedia di workspace runner.
+      # Setiap job berjalan di runner fresh — file dari job build-and-push tidak ikut terbawa.
+      - name: Checkout
+        uses: actions/checkout@v4
+
       # 5. Install Tailscale dan join network
       #    Server tidak expose port SSH ke internet — akses via Tailscale mesh VPN.
       #    Runner GitHub Actions harus join network yang sama sebelum bisa SSH.
