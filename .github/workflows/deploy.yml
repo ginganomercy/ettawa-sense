@@ -3,10 +3,10 @@ name: Enterprise CI/CD Deployment
 on:
   push:
     branches:
+      - master
       - main
     paths:
-      - 'ettawa-web/**'
-      - '.github/workflows/deploy.yml'
+      - '**'
 
 env:
   REGISTRY: ghcr.io
@@ -37,7 +37,7 @@ jobs:
       - name: Build and push AI image
         uses: docker/build-push-action@v5
         with:
-          context: ./ettawa-web/ai
+          context: ./ai
           push: true
           tags: ${{ env.IMAGE_PREFIX }}/ettawa-ai:latest
           cache-from: type=gha,scope=ai
@@ -47,7 +47,7 @@ jobs:
       - name: Build and push Backend image
         uses: docker/build-push-action@v5
         with:
-          context: ./ettawa-web/backend
+          context: ./backend
           push: true
           tags: ${{ env.IMAGE_PREFIX }}/ettawa-backend:latest
           cache-from: type=gha,scope=backend
@@ -57,7 +57,7 @@ jobs:
       - name: Build and push Frontend image
         uses: docker/build-push-action@v5
         with:
-          context: ./ettawa-web/frontend
+          context: ./frontend
           push: true
           tags: ${{ env.IMAGE_PREFIX }}/ettawa-frontend:latest
           cache-from: type=gha,scope=frontend
