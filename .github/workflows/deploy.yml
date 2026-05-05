@@ -60,6 +60,9 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ env.IMAGE_PREFIX }}/ettawa-frontend:latest
+          build-args: |
+            NEXT_PUBLIC_BACKEND_URL=https://api.ettawa-sakra.momoi.my.id
+            NEXT_PUBLIC_API_KEY=EttawaSecureKey2026!
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
 
