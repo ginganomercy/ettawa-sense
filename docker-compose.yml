@@ -1,0 +1,64 @@
+# ============================================================
+# Ettawa-Sense — Docker Compose (Microservices Monorepo)
+#
+# Arsitektur:
+#   1. ettawa-frontend : Next.js UI (Port 5151)
+#   2. ettawa-backend  : Node.js Express + MQTT + Socket.io (Port 3001)
+#   3. ettawa-ai       : Python DSP Signal Processing
+#   4. influxdb        : Time-series database (Port 8086)
+#
+# Nginx di server melakukan reverse proxy:
+#   upstream ettawa { server 127.0.0.1:5151; }
+#
+# Cara deploy:
+#   1. File .env sudah dibuat di server (lihat .env.production.example)
+#   2. docker compose pull
+#   3. docker compose up -d
+# ============================================================
+
+services:
+  influxdb:
+    image: influxdb:2.7
+    container_name: ettawa_influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb_data:/var/lib/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+
+  ettawa-ai:
+    image: ghcr.io/${GHCR_REPO}/ettawa-ai:latest
+    container_name: ettawa_ai
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  ettawa-backend:
+    image: ghcr.io/${GHCR_REPO}/ettawa-backend:latest
+    container_name: ettawa_backend
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+
+  ettawa-frontend:
+    image: ghcr.io/${GHCR_REPO}/ettawa-frontend:latest
+    container_name: ettawa_frontend
+    restart: unless-stopped
+    depends_on:
+      - ettawa-backend
+    ports:
+      # 5151 di host → 3000 di container (default Next.js)
+      - "5151:3000"
+    env_file:
+      - .env

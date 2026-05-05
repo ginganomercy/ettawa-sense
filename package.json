@@ -1,0 +1,16 @@
+{
+  "name": "ettawa-web-workspace",
+  "version": "1.0.0",
+  "description": "Root workspace untuk menjalankan modul Fronted, Backend, dan AI secara bersamaan di local mode",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npx concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\" \"cd ai && .venv\\Scripts\\python main.py\"",
+    "install:all": "npm install --prefix frontend && npm install --prefix backend && cd ai && pip install -r requirements.txt"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
