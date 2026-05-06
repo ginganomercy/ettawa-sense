@@ -34,6 +34,30 @@ export default function HistoryChart({ hours = 24 }) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+
+    // MOCK_MODE: Simulasi data riwayat (agar tidak 'Failed to fetch' saat backend belum siap)
+    const MOCK_MODE = true;
+    if (MOCK_MODE) {
+      setTimeout(() => {
+        const mockData = [];
+        const now = Date.now();
+        const dataPoints = hours * 4; // 1 titik setiap 15 menit
+        const intervalMs = (hours * 3600 * 1000) / dataPoints;
+
+        for (let i = dataPoints; i >= 0; i--) {
+          mockData.push({
+            time: now - (i * intervalMs),
+            temp_c: parseFloat((38.5 + Math.random() * 0.5).toFixed(2)),
+            stress_score: Math.floor(20 + Math.random() * 15),
+          });
+        }
+        setData(mockData);
+        setError(null);
+        setLoading(false);
+      }, 800);
+      return;
+    }
+
     fetch(getApiUrl(`/api/history?hours=${hours}`), {
       headers: {
         'x-api-key': API_KEY,

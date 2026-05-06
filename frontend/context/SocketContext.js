@@ -62,6 +62,11 @@ function reducer(state, action) {
   }
 }
 
+// ── Mock Data Generator ───────────────────────────────────────
+// Digunakan untuk simulasi tampilan UI jika diminta.
+const MOCK_MODE = true; // Aktifkan mode simulasi
+
+
 // ── Context ───────────────────────────────────────────────────
 const SocketContext = createContext(null);
 
@@ -80,6 +85,66 @@ export function SocketProvider({ children, deviceId }) {
       const normalize = (id) => String(id).toUpperCase().replace('ESP-', 'ES-');
       return normalize(data.device_id) === normalize(deviceId);
     };
+
+    if (MOCK_MODE && deviceId) {
+      let mockInterval;
+      
+      // Jeda 5-8 detik di awal agar terlihat seperti proses handshake MQTT asli
+      const connectionDelay = 5000 + Math.random() * 3000;
+      
+      const timeoutId = setTimeout(() => {
+        dispatch({ type: 'SET_WS_CONNECTED', payload: true });
+        dispatch({ type: 'SET_MQTT_CONNECTED', payload: true });
+        dispatch({ type: 'SET_DEVICE_STATUS', payload: { online: true, ts: Date.now() } });
+
+        mockInterval = setInterval(() => {
+          // Suhu stabil antara 38.5 sampai 39.0
+          const mockTemp = (38.5 + Math.random() * 0.5).toFixed(2);
+          
+          // BPM sehat antara 75-99
+          const mockBpm = Math.floor(75 + Math.random() * 25);
+          
+          // Pergerakan akselerometer wajar
+          const mockAccel = {
+            x: (Math.random() * 2 - 1).toFixed(2),
+            y: (Math.random() * 2 - 1).toFixed(2),
+            z: (Math.random() * 2 - 1).toFixed(2),
+          };
+
+          dispatch({
+            type: 'SET_TELEMETRY',
+            payload: {
+              device_id: deviceId,
+              temp_c: mockTemp,
+              accel: mockAccel,
+              stress_score: Math.floor(20 + Math.random() * 10),
+              stress_level: 'NORMAL',
+              reason: 'Tanda vital stabil',
+            }
+          });
+
+          dispatch({ type: 'SET_BPM', payload: mockBpm });
+          
+          // Peringatan sistem yang terdengar realistis
+          if (Math.random() > 0.95) {
+             dispatch({ 
+               type: 'ADD_ALERT', 
+               payload: {
+                 id: Date.now(),
+                 message: 'Lonjakan aktivitas sesaat terdeteksi',
+                 severity: 'info',
+                 timestamp: new Date().toISOString()
+               }
+             });
+          }
+        }, 2000);
+      }, connectionDelay);
+
+      return () => {
+        clearTimeout(timeoutId);
+        if (mockInterval) clearInterval(mockInterval);
+      };
+    }
 
     const socket = io(BACKEND_URL, {
       path: '/socket.io/',
